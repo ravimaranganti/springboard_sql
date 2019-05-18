@@ -104,12 +104,29 @@ FROM country_club.Members Members
 
 WHERE (starttime LIKE '2012-09-14%') 
 	 	AND ((Members.memid =0 and Facilities.guestcost* Bookings.slots >30)
-             OR (Members.memid =1 and Facilities.membercost* Bookings.slots >30))
+             OR (Members.memid !=0 and Facilities.membercost* Bookings.slots >30))
 		
 
 ORDER BY Cost_total DESC
+		 
+/* Q8: Approach 2*/
+		 
+SELECT  Facilities.name AS Facilities_Name,
+		CONCAT(Members.firstname,' ',Members.surname) AS Full_Name, 
+		CASE WHEN (Members.firstname= 'GUEST')   THEN Facilities.guestcost* Bookings.slots 
+		     WHEN (Members.firstname !='GUEST')  THEN Facilities.membercost* Bookings.slots  
+			 END AS 'Cost_total'
+FROM country_club.Bookings Bookings
+	JOIN country_club.Facilities Facilities 
+		ON Bookings.facid = Facilities.facid
+		AND Bookings.starttime LIKE  '2012-09-14%'
+		AND (((Bookings.memid =0) AND (Facilities.guestcost * Bookings.slots >30))
+		OR ((Bookings.memid !=0) AND (Facilities.membercost * Bookings.slots >30)))
+		JOIN country_club.Members Members 
+		ON Bookings.memid = Members.memid
 
-
+ORDER BY Cost_total DESC
+					      
 /* Q9: This time, produce the same result as in Q8, but using a subquery. */
 
 SELECT  Sub.name  AS Facilities_Name,
@@ -157,3 +174,22 @@ FROM
 WHERE Sub.Total_Revenue < 1000
 
 ORDER BY Sub.Total_Revenue
+		  
+/* Q10: Approach 2 */
+		  
+SELECT name, 
+	SUM(CASE WHEN memid = 0 THEN slots * guestcost
+		ELSE slots * membercost
+	END) AS 'Total_Revenue'
+	
+	FROM country_club.Bookings Bookings
+	JOIN country_club.Facilities Facilities
+	ON Bookings.facid =  Facilities.facid
+
+	GROUP BY name
+	
+	HAVING SUM(CASE WHEN memid = 0 THEN slots * guestcost 
+		   ELSE slots * membercost
+	END) < 1000
+
+ORDER BY 'Total_Revenue'
